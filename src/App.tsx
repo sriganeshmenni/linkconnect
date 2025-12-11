@@ -5,10 +5,13 @@ import { AuthPage } from './pages/AuthPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { FacultyDashboard } from './pages/FacultyDashboard';
 import { StudentDashboard } from './pages/StudentDashboard';
+import ProfilePage from './pages/ProfilePage';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
 
 const AppContent = () => {
-  const { user, loading } = useAuth();
+  type UserType = { id?: string | number; name?: string; email?: string; role?: string; };
+  const { user, loading } = useAuth() as { user: UserType, loading: boolean };
 
   if (loading) {
     return (
@@ -28,12 +31,19 @@ const AppContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      {user.role === 'admin' && <AdminDashboard />}
-      {user.role === 'faculty' && <FacultyDashboard />}
-      {user.role === 'student' && <StudentDashboard />}
-    </div>
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <Routes>
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/" element={
+            user.role === 'admin' ? <AdminDashboard /> :
+            user.role === 'faculty' ? <FacultyDashboard /> :
+            user.role === 'student' ? <StudentDashboard /> : null
+          } />
+        </Routes>
+      </div>
+    </Router>
   );
 };
 

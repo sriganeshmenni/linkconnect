@@ -5,7 +5,15 @@ import { Badge } from './ui/badge';
 import { ExternalLink, Calendar, Users, Copy, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
-export const LinkCard = ({ link, onEdit, onDelete, canManage = false, onRegister }) => {
+interface LinkCardProps {
+  link: any;
+  onEdit?: (link: any) => void;
+  onDelete?: (linkId: any) => void;
+  canManage?: boolean;
+  onRegister?: (link: any) => void;
+}
+
+export const LinkCard: React.FC<LinkCardProps> = ({ link, onEdit, onDelete, canManage = false, onRegister }) => {
   const handleCopyShortUrl = () => {
     navigator.clipboard.writeText(link.shortUrl);
     toast.success('Short URL copied to clipboard!');
@@ -75,7 +83,7 @@ export const LinkCard = ({ link, onEdit, onDelete, canManage = false, onRegister
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onEdit(link)}
+              onClick={() => onEdit?.(link)}
               className="flex-1"
             >
               <Edit className="w-4 h-4 mr-2" />
@@ -94,7 +102,7 @@ export const LinkCard = ({ link, onEdit, onDelete, canManage = false, onRegister
         ) : (
           <Button
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-            onClick={() => onRegister(link)}
+            onClick={() => onRegister?.(link)}
             disabled={!link.active || isExpired}
           >
             Register Now

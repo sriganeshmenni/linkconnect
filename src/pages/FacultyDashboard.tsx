@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LinkCard } from '../components/LinkCard';
 import { CreateLinkDialog } from '../components/CreateLinkDialog';
@@ -13,6 +14,7 @@ import { Plus, Loader2, Link2, Users, TrendingUp, Search, Download, Eye } from '
 import { toast } from 'sonner@2.0.3';
 
 export const FacultyDashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [links, setLinks] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -145,6 +147,7 @@ export const FacultyDashboard = () => {
           </Button>
         </div>
 
+      
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>

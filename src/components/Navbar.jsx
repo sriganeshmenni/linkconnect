@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Menu, X, LogOut, User } from 'lucide-react';
+import { Menu, X, LogOut, User, UserCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from './ui/button';
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [photo, setPhoto] = useState(null);
+
+  useEffect(() => {
+    try {
+      const key = `linkconnect_profile_photo_${user?.id || 'anon'}`;
+      const stored = localStorage.getItem(key);
+      if (stored) setPhoto(stored);
+    } catch (e) {}
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -31,6 +41,17 @@ export const Navbar = () => {
           {/* Desktop Navigation */}
           {user && (
             <div className="hidden md:flex items-center gap-6">
+              <Link to="/profile" className="flex items-center">
+                <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-orange-200 hover:border-blue-400 transition-all mr-2">
+                  {photo ? (
+                    <img src={photo} alt="profile" className="w-full h-full object-cover" />
+                  ) : (
+                    (user.name && user.name.length > 0)
+                      ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                      : <UserCircle className="w-7 h-7" />
+                  )}
+                </div>
+              </Link>
               <div className="flex items-center gap-2 text-gray-600">
                 <User className="w-4 h-4" />
                 <span className="text-sm">{user.name}</span>
