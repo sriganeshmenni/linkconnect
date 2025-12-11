@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LinkCard } from '../components/LinkCard';
 import { StudentRegistrationDialog } from '../components/StudentRegistrationDialog';
@@ -8,15 +9,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { Loader2, CheckCircle, Clock, Link2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
-
+import { toast } from 'sonner';
 export const StudentDashboard = () => {
-  const { user } = useAuth();
-  const [links, setLinks] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
+  type UserType = { id?: string | number; name?: string; email?: string; role?: string; };
+  type LinkType = { id: string | number; title: string; active: boolean; deadline: string; };
+  type SubmissionType = { id: string | number; linkId: string | number; status: string; submittedAt: string; };
+  const { user } = useAuth() as { user: UserType };
+  const [links, setLinks] = useState<LinkType[]>([]);
+  const [submissions, setSubmissions] = useState<SubmissionType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLink, setSelectedLink] = useState(null);
+  const [selectedLink, setSelectedLink] = useState<LinkType | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
@@ -38,12 +42,12 @@ export const StudentDashboard = () => {
     }
   };
 
-  const handleRegister = (link) => {
+  const handleRegister = (link: LinkType) => {
     setSelectedLink(link);
     setDialogOpen(true);
   };
 
-  const handleSubmitRegistration = async (submissionData) => {
+  const handleSubmitRegistration = async (submissionData: any) => {
     try {
       await submissionsAPI.create(submissionData);
       await loadData();
@@ -74,6 +78,7 @@ export const StudentDashboard = () => {
           <h1 className="text-gray-900 mb-2">Welcome, {user?.name}!</h1>
           <p className="text-gray-600">Track and register for placement opportunities</p>
         </div>
+        
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -196,6 +201,8 @@ export const StudentDashboard = () => {
         link={selectedLink}
         onSubmit={handleSubmitRegistration}
       />
+
     </div>
   );
-};
+}
+
