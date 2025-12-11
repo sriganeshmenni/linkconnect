@@ -37,8 +37,8 @@ app.use((req, res, next) => {
 app.use('/api/auth', require('./routes/auth'));
 // Uncomment and implement these routes for full functionality
 // app.use('/api/users', require('./routes/users'));
-// app.use('/api/links', require('./routes/links'));
-// app.use('/api/submissions', require('./routes/submissions'));
+app.use('/api/links', require('./routes/links'));
+app.use('/api/submissions', require('./routes/submissions'));
 // app.use('/api/analytics', require('./routes/analytics'));
 // app.use('/api/export', require('./routes/export'));
 

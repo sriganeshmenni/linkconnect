@@ -1,5 +1,5 @@
 {
-      "name": "LinkConnect Project Development",
+      "name": "linkconnect-project-development",
       "version": "0.1.0",
       "private": true,
       "dependencies": {
@@ -29,13 +29,23 @@
             "@radix-ui/react-toggle": "^1.1.2",
             "@radix-ui/react-toggle-group": "^1.1.2",
             "@radix-ui/react-tooltip": "^1.1.8",
+            "bcryptjs": "^3.0.3",
             "class-variance-authority": "^0.7.1",
             "clsx": "*",
             "cmdk": "^1.1.1",
+            "cors": "^2.8.5",
             "css": "^3.0.0",
+            "dotenv": "^17.2.3",
             "embla-carousel-react": "^8.6.0",
+            "exceljs": "^4.4.0",
+            "express": "^5.2.1",
+            "express-rate-limit": "^8.2.1",
+            "helmet": "^8.1.0",
             "input-otp": "^1.4.2",
+            "jsonwebtoken": "^9.0.3",
             "lucide-react": "^0.487.0",
+            "mongoose": "^9.0.1",
+            "multer": "^2.0.2",
             "next-themes": "^0.4.6",
             "react": "^18.3.1",
             "react-day-picker": "^8.10.1",
@@ -51,10 +61,24 @@
       "devDependencies": {
             "@types/node": "^20.10.0",
             "@vitejs/plugin-react-swc": "^3.10.2",
+            "nodemon": "^3.1.11",
             "vite": "^6.4.1"
       },
       "scripts": {
             "dev": "vite",
             "build": "vite build"
-      }
+      },
+      "main": "index.js",
+      "repository": {
+            "type": "git",
+            "url": "git+https://github.com/sriganeshmenni/linkconnect.git"
+      },
+      "keywords": [],
+      "author": "",
+      "license": "ISC",
+      "bugs": {
+            "url": "https://github.com/sriganeshmenni/linkconnect/issues"
+      },
+      "homepage": "https://github.com/sriganeshmenni/linkconnect#readme",
+      "description": ""
 }

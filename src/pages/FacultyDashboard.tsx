@@ -84,7 +84,8 @@ export const FacultyDashboard = () => {
       toast.success('Link deleted successfully');
       await loadData();
     } catch (error) {
-      toast.error('Failed to delete link');
+      const message = error instanceof Error ? error.message : 'Failed to delete link';
+      toast.error(message);
     }
   };
 
@@ -208,7 +209,7 @@ export const FacultyDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {links.map(link => (
                   <LinkCard
-                    key={link.id}
+                    key={link._id || link.id}
                     link={link}
                     canManage={true}
                     onEdit={handleEditLink}
@@ -245,11 +246,11 @@ export const FacultyDashboard = () => {
                 <div className="flex flex-wrap gap-2">
                   {links.map(link => (
                     <Button
-                      key={link.id}
-                      variant={selectedLinkId === link.id ? "default" : "outline"}
+                      key={link._id || link.id}
+                      variant={selectedLinkId === (link._id || link.id) ? "default" : "outline"}
                       size="sm"
-                      onClick={() => loadSubmissions(link.id)}
-                      className={selectedLinkId === link.id ? "bg-orange-500 hover:bg-orange-600" : ""}
+                      onClick={() => loadSubmissions(link._id || link.id)}
+                      className={selectedLinkId === (link._id || link.id) ? "bg-orange-500 hover:bg-orange-600" : ""}
                     >
                       <Eye className="w-4 h-4 mr-2" />
                       {link.title}

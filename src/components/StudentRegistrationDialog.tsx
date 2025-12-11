@@ -45,7 +45,7 @@ export const StudentRegistrationDialog = ({ open, onOpenChange, link, onSubmit }
     setLoading(true);
     try {
       const submissionData = {
-        linkId: link.id,
+        linkId: link._id || link.id,
         studentName: user.name,
         studentEmail: user.email,
         rollNumber: user.rollNumber || 'N/A',

@@ -84,7 +84,7 @@ export const LinkCard = ({ link, onEdit, onDelete, canManage = false, onRegister
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => onDelete(link.id)}
+              onClick={() => onDelete(link._id || link.id)}
               className="flex-1"
             >
               <Trash2 className="w-4 h-4 mr-2" />

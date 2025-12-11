@@ -42,10 +42,12 @@ const apiCall = async (endpoint, options = {}) => {
 export const linksAPI = {
   create: async (linkData) => {
     try {
-      return await apiCall('/links', {
+      const response = await apiCall('/links', {
         method: 'POST',
         body: JSON.stringify(linkData),
       });
+      // Handle both response formats: { success: true, link: {...} } or direct link object
+      return response.link || response;
     } catch (error) {
       console.warn('Using mock data - Backend not connected');
       const newLink = {
@@ -64,7 +66,9 @@ export const linksAPI = {
 
   getAll: async () => {
     try {
-      return await apiCall('/links');
+      const response = await apiCall('/links');
+      // Handle both response formats: { success: true, links: [...] } or direct array
+      return response.links || response;
     } catch (error) {
       console.warn('Using mock data - Backend not connected');
       // Try to get from localStorage first
@@ -104,12 +108,24 @@ export const linksAPI = {
     }
   },
 
+  getStudentLinks: async () => {
+    try {
+      const response = await apiCall('/links/student/my-links');
+      return response.links || response;
+    } catch (error) {
+      console.warn('Using mock data - Backend not connected');
+      // Fallback to all links for students when backend is unavailable
+      return linksAPI.getAll();
+    }
+  },
+
   update: async (id, data) => {
     try {
-      return await apiCall(`/links/${id}`, {
+      const response = await apiCall(`/links/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       });
+      return response.link || response;
     } catch (error) {
       console.warn('Using mock data - Backend not connected');
       const links = JSON.parse(localStorage.getItem('demo_links') || '[]');
@@ -178,7 +194,8 @@ export const submissionsAPI = {
 
   getByStudent: async (studentId) => {
     try {
-      return await apiCall(`/submissions/student/${studentId}`);
+      const response = await apiCall(`/submissions/student/${studentId}`);
+      return Array.isArray(response) ? response : (response.submissions || []);
     } catch (error) {
       console.warn('Using mock data - Backend not connected');
       const submissions = JSON.parse(localStorage.getItem('demo_submissions') || '[]');

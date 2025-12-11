@@ -26,13 +26,15 @@ export const StudentDashboard = () => {
     setLoading(true);
     try {
       const [linksData, submissionsData] = await Promise.all([
-        linksAPI.getAll(),
+        linksAPI.getStudentLinks(),
         submissionsAPI.getByStudent(user.id)
       ]);
-      setLinks(linksData);
-      setSubmissions(submissionsData);
+      setLinks(Array.isArray(linksData) ? linksData : []);
+      setSubmissions(Array.isArray(submissionsData) ? submissionsData : []);
     } catch (error) {
       toast.error('Failed to load data');
+      setLinks([]);
+      setSubmissions([]);
     } finally {
       setLoading(false);
     }
@@ -52,11 +54,11 @@ export const StudentDashboard = () => {
     }
   };
 
-  const activeLinks = links.filter(link => 
-    link.active && new Date(link.deadline) >= new Date()
-  );
+  const activeLinks = Array.isArray(links) ? links.filter(link => 
+    link && link.active && new Date(link.deadline) >= new Date()
+  ) : [];
 
-  const completedSubmissions = submissions.filter(s => s.status === 'completed');
+  const completedSubmissions = Array.isArray(submissions) ? submissions.filter(s => s && s.status === 'completed') : [];
 
   if (loading) {
     return (
@@ -131,7 +133,7 @@ export const StudentDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {activeLinks.map(link => (
                   <LinkCard
-                    key={link.id}
+                    key={link._id || link.id}
                     link={link}
                     onRegister={handleRegister}
                   />
