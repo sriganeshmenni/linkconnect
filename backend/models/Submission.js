@@ -1,28 +1,20 @@
 const mongoose = require('mongoose');
 
+// Aligned with frontend expectations and controller logic
 const submissionSchema = new mongoose.Schema({
-  linkId: {
+  // Reference to link
+  link: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Link',
     required: true
   },
-  studentId: {
+  // Reference to student user
+  student: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  studentName: {
-    type: String,
-    required: true
-  },
-  studentEmail: {
-    type: String,
-    required: true
-  },
-  rollNumber: {
-    type: String,
-    required: true
-  },
+  // Base64 or URL of the screenshot proof
   screenshot: {
     type: String,
     required: true
@@ -32,10 +24,15 @@ const submissionSchema = new mongoose.Schema({
     enum: ['pending', 'completed', 'verified'],
     default: 'completed'
   },
-  submittedAt: {
+  createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
+// Prevent duplicate submissions per student per link (explicitly named to avoid legacy mismatches)
+submissionSchema.index({ link: 1, student: 1 }, { unique: true, name: 'link_1_student_1' });
+
 module.exports = mongoose.model('Submission', submissionSchema);
+
+

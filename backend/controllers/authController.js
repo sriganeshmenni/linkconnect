@@ -15,6 +15,9 @@ exports.registerValidators = [
 ];
 
 exports.register = async (req, res) => {
+  if (process.env.ALLOW_SELF_REGISTER !== 'true') {
+    return res.status(403).json({ success: false, message: 'Self-registration is disabled. Please contact an admin.' });
+  }
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ success: false, errors: errors.array() });
@@ -63,10 +66,18 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-    // Generate JWT
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    // Record login stat
-    await LoginStat.create({ user: user._id, timestamp: new Date(), role: user.role });
+    // Generate JWT (include tokenVersion for force logout)
+    const token = jwt.sign({ id: user._id, role: user.role, tokenVersion: user.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    // Record login stat (normalized fields)
+    await LoginStat.create({
+      userId: user._id,
+      email: user.email,
+      role: user.role,
+      status: 'success',
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || 'unknown',
+      userAgent: req.headers['user-agent'] || 'unknown',
+      loginTime: new Date(),
+    });
     res.json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role, rollNumber: user.rollNumber } });
   } catch (err) {
     console.error('Login error:', err);

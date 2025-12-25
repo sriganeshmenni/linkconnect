@@ -150,3 +150,4 @@ export const StudentRegistrationDialog = ({ open, onOpenChange, link, onSubmit }
     </Dialog>
   );
 };
+

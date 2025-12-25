@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 
 router.get('/', auth, linkController.getAll);
+router.get('/divisions', auth, linkController.getDivisionCatalog);
 router.get('/student/my-links', auth, roleCheck('student'), linkController.getStudentLinks);
 router.get('/:id', auth, linkController.getById);
 router.post('/', auth, roleCheck('faculty', 'admin'), linkController.createValidators, linkController.create);

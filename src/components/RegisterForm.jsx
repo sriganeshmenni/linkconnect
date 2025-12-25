@@ -240,3 +240,4 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
     </Card>
   );
 };
+

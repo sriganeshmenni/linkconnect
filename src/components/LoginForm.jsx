@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { toast } from 'sonner@2.0.3';
+import { analyticsAPI } from '../utils/api';
+import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -29,6 +30,7 @@ export const LoginForm = ({ onSwitchToRegister }) => {
     try {
       const result = await login(formData.email, formData.password, formData.role);
       if (result.success) {
+        analyticsAPI.trackVisit(formData.role);
         toast.success(`Welcome! Logged in as ${formData.role}`);
       } else {
         toast.error(result.message || 'Login failed. Please check your credentials and role.');

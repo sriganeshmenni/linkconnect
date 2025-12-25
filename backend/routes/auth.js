@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const LoginStat = require('../models/LoginStat');
 
 // Register
 router.post('/register', async (req, res) => {
@@ -50,6 +51,21 @@ router.post('/login', async (req, res) => {
     user.lastLogin = new Date();
     user.loginHistory.push({ timestamp: new Date(), ipAddress: req.ip });
     await user.save();
+
+    // Record login stat
+    try {
+      await LoginStat.create({
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+        status: 'success',
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        loginTime: new Date(),
+      });
+    } catch (err) {
+      console.error('LoginStat create error:', err.message);
+    }
 
     // Generate token
     const token = jwt.sign(

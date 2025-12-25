@@ -10,3 +10,4 @@ router.get('/submissions', auth, roleCheck('admin'), exportController.exportSubm
 router.get('/logins', auth, roleCheck('admin'), exportController.exportLogins);
 
 module.exports = router;
+

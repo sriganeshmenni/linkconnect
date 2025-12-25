@@ -1,0 +1,24 @@
+[
+  {
+    "code": "AUS",
+    "name": "Aditya University",
+    "branches": [
+      {
+        "code": "CSE",
+        "name": "Computer Science and Engineering",
+        "years": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "sections": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ]
+      }
+    ]
+  }
+]

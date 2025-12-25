@@ -34,6 +34,37 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  institution: {
+    type: String,
+    default: 'Aditya'
+  },
+  collegeCode: {
+    type: String,
+    default: 'AEC'
+  },
+  branchCode: {
+    type: String,
+    default: 'CSE'
+  },
+  year: {
+    type: Number,
+    default: 1
+  },
+  section: {
+    type: String,
+    default: 'A'
+  },
+  rollNumber: {
+    type: String,
+    required: false,
+    trim: true,
+    unique: true,
+    sparse: true
+  },
+  tokenVersion: {
+    type: Number,
+    default: 0
+  },
   lastLogin: {
     type: Date
   },

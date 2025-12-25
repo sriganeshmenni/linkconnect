@@ -30,6 +30,22 @@ const linkSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  collegeCode: {
+    type: String,
+    default: 'AEC'
+  },
+  branchCodes: {
+    type: [String],
+    default: []
+  },
+  years: {
+    type: [Number],
+    default: []
+  },
+  sections: {
+    type: [String],
+    default: []
+  },
   active: {
     type: Boolean,
     default: true

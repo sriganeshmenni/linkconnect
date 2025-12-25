@@ -1,47 +1,58 @@
 const mongoose = require('mongoose');
 
-const submissionSchema = new mongoose.Schema({
-  linkId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Link',
-    required: true
-  },
-  studentId: {
+const loginStatSchema = new mongoose.Schema({
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    // Not required because a login attempt might be for a user that doesn't exist yet
+    required: false
   },
-  studentName: {
+  email: {
     type: String,
-    required: true
+    required: true,
+    lowercase: true,
+    trim: true
   },
-  studentEmail: {
+  role: {
     type: String,
-    required: true
-  },
-  studentRollNumber: {
-    type: String
-  },
-  screenshotUrl: {
-    type: String,
-    required: true
+    enum: ['admin', 'faculty', 'student'],
+    // Useful to verify what role the user claimed or actually had at the time
+    required: false 
   },
   status: {
     type: String,
-    enum: ['pending', 'verified', 'rejected'],
-    default: 'pending'
+    enum: ['success', 'failed'],
+    required: true
   },
-  remarks: {
-    type: String, 
-    trim: true,
-    default: '' 
+  failureReason: {
+    type: String,
+    // Examples: 'invalid_password', 'user_not_found', 'account_inactive'
+    default: null
   },
-  submittedAt: {
+  ipAddress: {
+    type: String,
+    required: true
+  },
+  userAgent: {
+    type: String,
+    // Stores browser/device info (e.g., "Mozilla/5.0...")
+    default: 'Unknown'
+  },
+  deviceType: {
+    type: String,
+    enum: ['mobile', 'tablet', 'desktop', 'unknown'],
+    default: 'unknown'
+  },
+  loginTime: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    expires: 60 * 60 * 24 * 90 // Optional: Automatically delete logs after 90 days to save space
   }
 });
 
-submissionSchema.index({ linkId: 1, studentId: 1 }, { unique: true });
+// Indexes for faster querying of logs
+loginStatSchema.index({ email: 1, loginTime: -1 });
+loginStatSchema.index({ userId: 1, loginTime: -1 });
+loginStatSchema.index({ ipAddress: 1, loginTime: -1 });
 
-module.exports = mongoose.model('Submission', submissionSchema);
+module.exports = mongoose.model('LoginStat', loginStatSchema);

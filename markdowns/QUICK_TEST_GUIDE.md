@@ -1,6 +1,7 @@
 # Quick Start: Link Distribution Testing
 
 ## Prerequisites
+
 - Backend running on `localhost:5000`
 - MongoDB connected
 - Frontend running
@@ -10,6 +11,7 @@
 ### 1. Setup Test Data
 
 Register these test accounts:
+
 ```
 Faculty Account:
 - Email: faculty@test.com
@@ -55,11 +57,11 @@ Open MongoDB Compass or mongosh:
 
 ```javascript
 // Check StudentLink collection
-db.studentlinks.find({ linkId: ObjectId("...") }).count()
+db.studentlinks.find({ linkId: ObjectId("...") }).count();
 // Should return: number of students
 
 // Check specific student's links
-db.studentlinks.find({ studentEmail: "student1@test.com" })
+db.studentlinks.find({ studentEmail: "student1@test.com" });
 // Should show the newly created link assignment
 ```
 
@@ -83,8 +85,9 @@ db.studentlinks.find({ studentEmail: "student1@test.com" })
 ## Common Issues & Fixes
 
 **Issue**: Student doesn't see the link
+
 ```
-Fix: 
+Fix:
 1. Check auth token is saved
 2. Verify user role is 'student'
 3. Check StudentLink collection in MongoDB
@@ -92,6 +95,7 @@ Fix:
 ```
 
 **Issue**: "Link pushed to 0 students"
+
 ```
 Fix:
 1. Ensure student accounts are created
@@ -100,11 +104,13 @@ Fix:
 ```
 
 **Issue**: Duplicate StudentLink errors
+
 ```
 Fix: This is prevented by unique index, safe to ignore
 ```
 
 **Issue**: 404 on `/links/student/my-links`
+
 ```
 Fix:
 1. Ensure route is added to links.js
@@ -123,15 +129,85 @@ Fix:
 ## Network Requests to Monitor
 
 Faculty creating link:
+
 ```
 POST /api/links
 → 201 Created
 ```
 
 Student loading dashboard:
+
 ```
 GET /api/links/student/my-links
 → 200 OK with array of links
 ```
 
 Check these in DevTools Network tab.
+
+---
+
+# Quick Start: Submissions & Verification
+
+## Prerequisites
+
+- Backend running on `localhost:5000` with env:
+  - `MONGODB_URI=<your connection string>`
+  - `FRONTEND_URL=http://localhost:5173`
+- Frontend running on `http://localhost:5173`
+- Auth flows working (JWT in localStorage as `linkconnect_token`)
+
+## 1) Student submits registration
+
+1. Login as a student
+2. Go to Student Dashboard → Available Links
+3. Click `Register` on a link
+4. Upload a screenshot (PNG/JPG, ≤5MB)
+5. Submit
+
+Expected:
+
+- API: `POST /api/submissions` with body `{ linkId, screenshot }`
+- Response: `{ success: true, submission }`
+- DB: New `submissions` document with fields `{ link, student, screenshot, status: 'completed', createdAt }`
+
+## 2) Student history
+
+1. Stay in Student Dashboard → My History tab
+2. Newly submitted item should appear with status `completed`
+
+API/DB:
+
+- `GET /api/submissions/student/:studentId` returns array where `link` is populated with `{ title, shortUrl }`
+
+## 3) Faculty views submissions per link
+
+1. Login as a faculty
+2. Faculty Dashboard → Submissions tab
+3. Click a link button at the top to load its submissions
+4. Filter via search if needed
+
+Expected:
+
+- API: `GET /api/submissions/link/:linkId` returns submissions populated with `student { name, email, rollNumber }` and `link { title, shortUrl }`
+- Table shows Name, Email, Status, Submitted
+
+## 4) Faculty views details and verifies
+
+1. Click `View` to open submission details (screenshot visible)
+2. Click `Verify` to set status to `verified`
+
+Expected:
+
+- API: `PUT /api/submissions/:id/verify` with `{ status: 'verified' }`
+- Row updates to show `verified` after reload
+
+## Troubleshooting
+
+- 401/403 on faculty student history:
+  - Ensure route permission includes roles `faculty`/`admin` for `GET /api/submissions/student/:studentId`
+- 400 on create submission:
+  - Ensure request body includes `linkId` and `screenshot`
+- 500 or populate issues:
+  - Confirm `Submission` schema uses `link` and `student` references (not `linkId`/`studentId`)
+- CORS blocked:
+  - Set `FRONTEND_URL` to frontend origin, or temporarily relax CORS for local testing
