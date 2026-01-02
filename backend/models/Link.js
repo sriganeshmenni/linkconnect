@@ -21,6 +21,10 @@ const linkSchema = new mongoose.Schema({
   description: {
     type: String
   },
+  guidelines: {
+    type: String,
+    default: ''
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -43,6 +47,10 @@ const linkSchema = new mongoose.Schema({
     default: []
   },
   sections: {
+    type: [String],
+    default: []
+  },
+  allowedGenders: {
     type: [String],
     default: []
   },

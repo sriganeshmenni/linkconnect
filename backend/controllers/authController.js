@@ -29,10 +29,8 @@ exports.register = async (req, res) => {
     if (existingUser) {
       return res.status(409).json({ success: false, message: 'Email already registered' });
     }
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-    // Create user object
-    const userData = { name, email, password: hashedPassword, role };
+    // Create user object (let the User model pre-save hook hash the password)
+    const userData = { name, email, password, role };
     if (role === 'student') userData.rollNumber = rollNumber;
     const user = new User(userData);
     await user.save();
@@ -62,7 +60,7 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }

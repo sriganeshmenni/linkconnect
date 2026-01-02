@@ -434,13 +434,25 @@ export const linksAPI = {
     return res.link; // ALWAYS return link object
   },
 
-  getAll: async () => {
-    const res = await apiCall('/links');
+  getAll: async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.search) params.set('q', filters.search);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.sort) params.set('sort', filters.sort);
+    const query = params.toString();
+
+    const res = await apiCall(`/links${query ? `?${query}` : ''}`);
     return Array.isArray(res?.links) ? res.links : [];
   },
 
-  getStudentLinks: async () => {
-    const res = await apiCall('/links/student/my-links');
+  getStudentLinks: async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.search) params.set('q', filters.search);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.sort) params.set('sort', filters.sort);
+
+    const query = params.toString();
+    const res = await apiCall(`/links/student/my-links${query ? `?${query}` : ''}`);
     return Array.isArray(res?.links) ? res.links : [];
   },
 

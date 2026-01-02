@@ -84,12 +84,13 @@ exports.changePassword = async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    const match = await bcrypt.compare(currentPassword, user.password);
+    const match = await user.comparePassword(currentPassword);
     if (!match) {
       return res.status(401).json({ success: false, message: 'Current password is incorrect' });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    // Assign raw password; the User model pre-save hook will hash it
+    user.password = newPassword;
     user.tokenVersion = (user.tokenVersion || 0) + 1; // revoke existing sessions
     await user.save();
 

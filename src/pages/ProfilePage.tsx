@@ -8,7 +8,7 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Separator } from '../components/ui/separator';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { profileAPI } from '../utils/api';
 import {
   Mail,
@@ -236,6 +236,9 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+       <Button variant="outline" className="w-50 justify-start mb-1 bg-orange-100 hover:bg-orange-100 text-orange-700 border-orange-300" onClick={() => navigate('/dashboard')}>
+                <ArrowLeft className="h-4 w-4 mr-2" /> Back to dashboard
+              </Button>
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
         <div className="flex flex-col lg:flex-row gap-6">
           <Card className="flex-1">
@@ -243,6 +246,7 @@ const ProfilePage: React.FC = () => {
               <div className="flex items-center gap-3">
                 <div className="h-14 w-14 rounded-full bg-slate-200 flex items-center justify-center">
                   <User className="h-7 w-7 text-slate-600" />
+                
                 </div>
                 <div>
                   <CardTitle className="text-xl">{profile.name || 'Add your name'}</CardTitle>
@@ -274,9 +278,7 @@ const ProfilePage: React.FC = () => {
               <CardTitle className="text-base flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start mb-2 bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-300" onClick={() => navigate('/dashboard')}>
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back to dashboard
-              </Button>
+             
               <Button variant="secondary" className="w-full justify-start" onClick={() => document.getElementById('profile-editor')?.scrollIntoView({ behavior: 'smooth' })}>
                 Update profile
               </Button>
@@ -479,7 +481,7 @@ const ProfilePage: React.FC = () => {
           <CardContent className="space-y-3">
             {completion.missing.length === 0 ? (
               <p className="text-sm text-emerald-700">All set! Your profile is complete.</p>
-            ) : (
+            ) : ( 
               completion.missing.map((item) => (
                 <div key={item} className="flex items-center justify-between bg-slate-50 border rounded px-3 py-2 text-sm">
                   <span className="capitalize">Add {item}</span>

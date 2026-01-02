@@ -51,7 +51,8 @@ exports.resetUserPassword = async (req, res) => {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    // Assign raw password and allow the User model pre-save hook to hash it
+    user.password = newPassword;
     // Bump tokenVersion to force logout old sessions
     user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();

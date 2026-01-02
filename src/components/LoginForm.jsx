@@ -146,7 +146,7 @@ export const LoginForm = ({ onSwitchToRegister }) => {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm">
+        {/* <div className="mt-6 text-center text-sm">
           <span className="text-gray-600">Don't have an account? </span>
           <button
             onClick={onSwitchToRegister}
@@ -154,7 +154,7 @@ export const LoginForm = ({ onSwitchToRegister }) => {
           >
             Register here
           </button>
-        </div>
+        </div> */}
 
         <div className="mt-6 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
           <p className="text-sm mb-2 text-orange-900">

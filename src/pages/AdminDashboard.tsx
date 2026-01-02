@@ -10,8 +10,8 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Loader2, Users, Link2, FileCheck, TrendingUp, Search, Download, UserX, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { Loader2, Users, Link2, FileCheck, TrendingUp, Search, Download, UserX, Edit, Trash2, LayoutGrid, List, Filter } from 'lucide-react';
+import { toast } from 'sonner';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const AdminDashboard = () => {
@@ -33,6 +33,13 @@ export const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [linkFilters, setLinkFilters] = useState({
+    search: '',
+    status: 'all',
+    sort: 'createdDesc',
+    layout: 'list' as 'grid' | 'list',
+  });
+  const [linksRefreshing, setLinksRefreshing] = useState(false);
   const [visitStats, setVisitStats] = useState(null);
   const [userActivityQuery, setUserActivityQuery] = useState('');
   const [userActivityResults, setUserActivityResults] = useState([]);
@@ -78,6 +85,14 @@ export const AdminDashboard = () => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    // Skip triggering if initial load still running
+    if (!loading) {
+      loadLinksWithFilters(linkFilters);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkFilters.search, linkFilters.status, linkFilters.sort]);
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -87,7 +102,11 @@ export const AdminDashboard = () => {
         usersAPI.getAll(),
         analyticsAPI.getStats(),
         analyticsAPI.getLoginStats(),
-        linksAPI.getAll(),
+        linksAPI.getAll({
+          search: linkFilters.search,
+          status: linkFilters.status,
+          sort: linkFilters.sort,
+        }),
         adminAPI.getRateLimit(),
         auditAPI.getLogs({
           skip: auditPage * pageSize,
@@ -212,6 +231,22 @@ export const AdminDashboard = () => {
     }
   };
 
+  const loadLinksWithFilters = async (current = linkFilters) => {
+    setLinksRefreshing(true);
+    try {
+      const data = await linksAPI.getAll({
+        search: current.search,
+        status: current.status,
+        sort: current.sort,
+      });
+      setLinks(Array.isArray(data?.links) ? data.links : Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error('Failed to load links');
+    } finally {
+      setLinksRefreshing(false);
+    }
+  };
+
   const handleSearchUserActivity = async () => {
     if (!userActivityQuery.trim()) {
       setUserActivityResults([]);
@@ -260,7 +295,7 @@ export const AdminDashboard = () => {
     try {
       await adminAPI.toggleLinkActive(linkId);
       toast.success('Link status updated');
-      await loadData();
+      await loadLinksWithFilters(linkFilters);
     } catch (error) {
       toast.error('Failed to update link');
     }
@@ -816,48 +851,149 @@ export const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="links">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Links</CardTitle>
-                <CardDescription>Toggle active/inactive across the platform</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Owner</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Deadline</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {links.map(link => (
-                        <TableRow key={link._id}>
-                          <TableCell>{link.title}</TableCell>
-                          <TableCell>{link.createdByEmail || link.createdBy}</TableCell>
-                          <TableCell>
-                            {link.active ? (
-                              <Badge className="bg-green-100 text-green-700">Active</Badge>
-                            ) : (
-                              <Badge variant="secondary">Inactive</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>{link.deadline ? new Date(link.deadline).toLocaleDateString() : '-'}</TableCell>
-                          <TableCell>
-                            <Button size="sm" variant="outline" onClick={() => handleToggleLinkActive(link._id)}>
-                              {link.active ? 'Deactivate' : 'Activate'}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+            <div className="space-y-4">
+              {/* Filter bar */}
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-1 items-center gap-3">
+                  <div className="flex items-center gap-2 flex-1">
+                    <Search className="w-4 h-4 text-gray-500" />
+                    <Input
+                      placeholder="Search links..."
+                      value={linkFilters.search}
+                      onChange={(e) => setLinkFilters((f) => ({ ...f, search: e.target.value }))}
+                      className="flex-1"
+                    />
+                  </div>
+                  <Select value={linkFilters.status} onValueChange={(val) => setLinkFilters((f) => ({ ...f, status: val }))}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active / Upcoming</SelectItem>
+                      <SelectItem value="closed">Closed / Expired</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={linkFilters.sort} onValueChange={(val) => setLinkFilters((f) => ({ ...f, sort: val }))}>
+                    <SelectTrigger className="w-[170px]">
+                      <SelectValue placeholder="Sort" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="deadlineAsc">Deadline (Soonest)</SelectItem>
+                      <SelectItem value="deadlineDesc">Deadline (Latest)</SelectItem>
+                      <SelectItem value="createdDesc">Newest Created</SelectItem>
+                      <SelectItem value="createdAsc">Oldest Created</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={linkFilters.layout === 'grid' ? 'default' : 'outline'}
+                    size="icon"
+                    onClick={() => setLinkFilters((f) => ({ ...f, layout: 'grid' }))}
+                    aria-label="Grid view"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={linkFilters.layout === 'list' ? 'default' : 'outline'}
+                    size="icon"
+                    onClick={() => setLinkFilters((f) => ({ ...f, layout: 'list' }))}
+                    aria-label="List view"
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setLinkFilters((f) => ({ ...f, search: '', status: 'all', sort: 'createdDesc' }))}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
+
+              {linksRefreshing ? (
+                <div className="flex items-center justify-center min-h-[200px]">
+                  <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                </div>
+              ) : links.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Link2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">No links match the current filters</p>
+                  </CardContent>
+                </Card>
+              ) : linkFilters.layout === 'list' ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>All Links</CardTitle>
+                    <CardDescription>Toggle active/inactive across the platform</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Owner</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Deadline</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {links.map(link => (
+                            <TableRow key={link._id}>
+                              <TableCell>{link.title}</TableCell>
+                              <TableCell>{link.createdByEmail || link.createdBy}</TableCell>
+                              <TableCell>
+                                {link.active ? (
+                                  <Badge className="bg-green-100 text-green-700">Active</Badge>
+                                ) : (
+                                  <Badge variant="secondary">Inactive</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>{link.deadline ? new Date(link.deadline).toLocaleDateString() : '-'}</TableCell>
+                              <TableCell>
+                                <Button size="sm" variant="outline" onClick={() => handleToggleLinkActive(link._id)}>
+                                  {link.active ? 'Deactivate' : 'Activate'}
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {links.map((link) => (
+                    <Card key={link._id}>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base line-clamp-2">{link.title}</CardTitle>
+                        <CardDescription className="text-xs">
+                          {link.createdByEmail || link.createdBy || 'Unknown'}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <div className="text-sm text-gray-600 flex justify-between">
+                          <span>Status</span>
+                          <Badge variant="outline">{link.active === false ? 'Inactive' : 'Active'}</Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 flex justify-between">
+                          <span>Deadline</span>
+                          <span>{link.deadline ? new Date(link.deadline).toLocaleDateString() : '—'}</span>
+                        </div>
+                        <Button size="sm" className="w-full" variant="outline" onClick={() => handleToggleLinkActive(link._id)}>
+                          {link.active ? 'Deactivate' : 'Activate'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           <TabsContent value="settings">

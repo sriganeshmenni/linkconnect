@@ -690,7 +690,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { Plus, Loader2, Link2, Users, Eye, TrendingUp, Search, Download } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  Plus,
+  Loader2,
+  Link2,
+  Users,
+  Eye,
+  TrendingUp,
+  Search,
+  Download,
+  LayoutGrid,
+  List,
+  Filter,
+  CalendarClock,
+} from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { toast } from 'sonner@2.0.3';
 
@@ -716,17 +730,29 @@ export const FacultyDashboard = () => {
   const [studentHistory, setStudentHistory] = useState([]);
   const [studentHistoryLoading, setStudentHistoryLoading] = useState(false);
   const [divisionCatalog, setDivisionCatalog] = useState({ colleges: [] });
+  const [filters, setFilters] = useState({
+    search: '',
+    status: 'all',
+    sort: 'createdDesc',
+    layout: 'grid' as 'grid' | 'list',
+  });
 
   useEffect(() => {
-    loadLinks();
+    loadLinks(filters);
     loadStats();
     loadDivisions();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.search, filters.status, filters.sort]);
 
   /* ---------- LOAD LINKS (CRITICAL) ---------- */
-  const loadLinks = async () => {
+  const loadLinks = async (currentFilters = filters) => {
+    setLoading(true);
     try {
-      const data = await linksAPI.getAll();
+      const data = await linksAPI.getAll({
+        search: currentFilters.search,
+        status: currentFilters.status,
+        sort: currentFilters.sort,
+      });
       setLinks(Array.isArray(data) ? data : []);
     } catch {
       toast.error('Failed to load links');
@@ -844,18 +870,23 @@ export const FacultyDashboard = () => {
   /* ---------- CRUD ---------- */
   const handleCreateLink = async (data) => {
     await linksAPI.create(data);
-    loadLinks();
+    loadLinks(filters);
   };
 
   const handleUpdateLink = async (data, id) => {
     await linksAPI.update(id, data);
-    loadLinks();
+    loadLinks(filters);
   };
 
   const handleDeleteLink = async (id) => {
     if (!confirm('Delete link?')) return;
     await linksAPI.delete(id);
-    loadLinks();
+    loadLinks(filters);
+  };
+
+  const handleEditLink = (link) => {
+    setEditLink(link);
+    setDialogOpen(true);
   };
 
   const filteredSubmissions = submissions.filter((s) =>
@@ -870,7 +901,9 @@ export const FacultyDashboard = () => {
     totalSubmissions: stats?.totalSubmissions ?? stats?.data?.totalSubmissions ?? 0,
   };
 
-  if (loading) {
+  const isRefreshing = loading && links.length > 0;
+
+  if (loading && links.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
         <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
@@ -937,12 +970,76 @@ export const FacultyDashboard = () => {
         </TabsList>
 
         {/* LINKS TAB */}
-        <TabsContent value="links">
-          {links.length === 0 ? (
+        <TabsContent value="links" className="space-y-4">
+          {/* Filter bar */}
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-1 items-center gap-3">
+              <div className="flex items-center gap-2 flex-1">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <Input
+                  placeholder="Search title, description, guidelines..."
+                  value={filters.search}
+                  onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+                  className="flex-1"
+                />
+              </div>
+              <Select value={filters.status} onValueChange={(val) => setFilters((f) => ({ ...f, status: val }))}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active / Upcoming</SelectItem>
+                  <SelectItem value="closed">Closed / Expired</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filters.sort} onValueChange={(val) => setFilters((f) => ({ ...f, sort: val }))}>
+                <SelectTrigger className="w-[170px]">
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="deadlineAsc">Deadline (Soonest)</SelectItem>
+                  <SelectItem value="deadlineDesc">Deadline (Latest)</SelectItem>
+                  <SelectItem value="createdDesc">Newest Created</SelectItem>
+                  <SelectItem value="createdAsc">Oldest Created</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={filters.layout === 'grid' ? 'default' : 'outline'}
+                size="icon"
+                onClick={() => setFilters((f) => ({ ...f, layout: 'grid' }))}
+                aria-label="Grid view"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={filters.layout === 'list' ? 'default' : 'outline'}
+                size="icon"
+                onClick={() => setFilters((f) => ({ ...f, layout: 'list' }))}
+                aria-label="List view"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setFilters({ search: '', status: 'all', sort: 'createdDesc', layout: filters.layout })}
+              >
+                Clear
+              </Button>
+            </div>
+          </div>
+
+          {isRefreshing ? (
+            <div className="flex items-center justify-center min-h-[200px]">
+              <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+            </div>
+          ) : links.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <Link2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">No links created yet</p>
+                <p className="text-gray-600 mb-4">No links match the current filters</p>
                 <Button
                   onClick={() => {
                     setEditLink(null);
@@ -950,8 +1047,56 @@ export const FacultyDashboard = () => {
                   }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Link
+                  Create Link
                 </Button>
+              </CardContent>
+            </Card>
+          ) : filters.layout === 'list' ? (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Links</CardTitle>
+                  <p className="text-sm text-gray-500">Click a row to edit</p>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <CalendarClock className="w-4 h-4" />
+                  Sorted
+                  {filters.sort === 'deadlineAsc' && ' by earliest deadline'}
+                  {filters.sort === 'deadlineDesc' && ' by latest deadline'}
+                  {filters.sort === 'createdDesc' && ' by newest created'}
+                  {filters.sort === 'createdAsc' && ' by oldest created'}
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Deadline</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Registrations</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {links.map((link) => (
+                      <TableRow key={link._id} className="cursor-pointer" onClick={() => handleEditLink(link)}>
+                        <TableCell className="font-medium">{link.title}</TableCell>
+                        <TableCell>
+                          {link.deadline ? new Date(link.deadline).toLocaleDateString() : '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{link.active === false ? 'Inactive' : 'Active'}</Badge>
+                        </TableCell>
+                        <TableCell>{link.registrations ?? link.registrationCount ?? 0}</TableCell>
+                        <TableCell className="space-x-2">
+                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleEditLink(link); }}>Edit</Button>
+                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleDeleteLink(link._id); }}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           ) : (
@@ -961,7 +1106,7 @@ export const FacultyDashboard = () => {
                   key={link._id}
                   link={link}
                   canManage
-                  onEdit={setEditLink}
+                  onEdit={handleEditLink}
                   onDelete={() => handleDeleteLink(link._id)}
                 />
               ))}
@@ -1046,7 +1191,10 @@ export const FacultyDashboard = () => {
       {/* CREATE / EDIT DIALOG */}
       <CreateLinkDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setEditLink(null);
+        }}
         onSubmit={editLink ? handleUpdateLink : handleCreateLink}
         editLink={editLink}
         divisionCatalog={divisionCatalog}

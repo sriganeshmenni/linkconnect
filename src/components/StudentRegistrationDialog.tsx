@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { Loader2, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -14,6 +14,16 @@ export const StudentRegistrationDialog = ({ open, onOpenChange, link, onSubmit }
     screenshotPreview: null
   });
   const [loading, setLoading] = useState(false);
+  const [linkVisited, setLinkVisited] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setLinkVisited(true); // already confirmed in card dialog
+    } else {
+      setLinkVisited(false);
+      setFormData({ screenshot: null, screenshotPreview: null });
+    }
+  }, [open]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -36,11 +46,6 @@ export const StudentRegistrationDialog = ({ open, onOpenChange, link, onSubmit }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.screenshot) {
-      toast.error('Please upload a screenshot of your registration');
-      return;
-    }
 
     setLoading(true);
     try {
@@ -70,21 +75,59 @@ export const StudentRegistrationDialog = ({ open, onOpenChange, link, onSubmit }
         <DialogHeader>
           <DialogTitle>Submit Registration</DialogTitle>
           <DialogDescription>
-            Upload a screenshot proving you've registered for: {link?.title}
+            Review the details and submit after visiting the registration link.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-            <h4 className="text-sm mb-2">Link Details:</h4>
-            <p className="text-sm text-gray-700">{link?.title}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              Deadline: {link?.deadline && new Date(link.deadline).toLocaleDateString()}
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg space-y-2">
+            <h4 className="text-sm font-semibold">{link?.title}</h4>
+            {link?.description && <p className="text-sm text-gray-700">{link.description}</p>}
+            <p className="text-xs text-gray-600">
+              Deadline: {link?.deadline ? new Date(link.deadline).toLocaleString() : '—'}
             </p>
           </div>
 
+          {link?.guidelines && (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-800">
+              <p className="font-semibold mb-1 text-xs">Guidelines</p>
+              <p className="whitespace-pre-wrap leading-relaxed text-xs">{link.guidelines}</p>
+            </div>
+          )}
+
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              type="button"
+              onClick={() => {
+                if (link?.url) {
+                  window.open(link.url, '_blank', 'noopener,noreferrer');
+                  setLinkVisited(true);
+                }
+              }}
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+            >
+              Open Link
+            </Button>
+            <Button
+              type="submit"
+              disabled={!linkVisited || loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit'
+              )}
+            </Button>
+          </div>
+          {!linkVisited && (
+            <p className="text-xs text-gray-500">Submit will enable after you open the link.</p>
+          )}
+
           <div className="space-y-2">
-            <Label htmlFor="screenshot">Upload Screenshot *</Label>
+            <Label htmlFor="screenshot">Upload Screenshot (optional)</Label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-400 transition-colors">
               {formData.screenshotPreview ? (
                 <div className="space-y-4">
@@ -116,10 +159,6 @@ export const StudentRegistrationDialog = ({ open, onOpenChange, link, onSubmit }
                 </label>
               )}
             </div>
-          </div>
-
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
-            <strong>Note:</strong> Make sure your screenshot clearly shows the confirmation page or email.
           </div>
 
           <DialogFooter>

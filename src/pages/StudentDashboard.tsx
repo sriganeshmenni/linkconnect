@@ -257,7 +257,25 @@ import {
   TableRow
 } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
-import { Loader2, CheckCircle, Clock, Link2 } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
+import {
+  Loader2,
+  CheckCircle,
+  Clock,
+  Link2,
+  LayoutGrid,
+  List,
+  Filter,
+  CalendarClock,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 /* ================= TYPES ================= */
@@ -303,20 +321,31 @@ export const StudentDashboard = () => {
   const [links, setLinks] = useState<LinkType[]>([]);
   const [submissions, setSubmissions] = useState<SubmissionType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    search: '',
+    status: 'active',
+    sort: 'deadlineAsc',
+    layout: 'grid' as 'grid' | 'list',
+  });
 
   const [selectedLink, setSelectedLink] = useState<LinkType | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.search, filters.status, filters.sort]);
 
   /* ========== LOAD DATA ========== */
-  const loadData = async () => {
+  const loadData = async (currentFilters = filters) => {
     setLoading(true);
     try {
       const [linksData, submissionsData] = await Promise.all([
-        linksAPI.getStudentLinks(),
+        linksAPI.getStudentLinks({
+          search: currentFilters.search,
+          status: currentFilters.status,
+          sort: currentFilters.sort,
+        }),
         submissionsAPI.getByStudent(user?._id || user?.id)
       ]);
 
@@ -407,9 +436,16 @@ export const StudentDashboard = () => {
   });
 
 
-  // Only show links that are not expired and not registered in Available
-  const availableLinks = linksWithStatus.filter(l => {
+  // Show links for "Available" tab respecting status filter
+  const availableLinks = linksWithStatus.filter((l) => {
     const isExpired = l.deadline && new Date(l.deadline) < new Date();
+
+    if (filters.status === 'closed') {
+      // When user explicitly wants closed/expired, show anything not registered
+      return l.registrationStatus !== 'registered';
+    }
+
+    // Default: show only open and not yet registered
     return l.registrationStatus === 'not-registered' && !isExpired;
   });
 
@@ -428,13 +464,7 @@ export const StudentDashboard = () => {
   );
 
   /* ========== LOADER ========== */
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-      </div>
-    );
-  }
+  const isLoading = loading;
 
   /* ========== UI ========== */
   return (
@@ -481,6 +511,72 @@ export const StudentDashboard = () => {
           </Card>
         </div>
 
+        {/* FILTER BAR */}
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-1 items-center gap-3">
+            <div className="flex items-center gap-2 flex-1">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <Input
+                placeholder="Search title, description, guidelines..."
+                value={filters.search}
+                onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+                className="flex-1"
+              />
+            </div>
+            <Select
+              value={filters.status}
+              onValueChange={(val) => setFilters((f) => ({ ...f, status: val }))}
+            >
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active / Upcoming</SelectItem>
+                <SelectItem value="closed">Closed / Expired</SelectItem>
+                <SelectItem value="all">All</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={filters.sort}
+              onValueChange={(val) => setFilters((f) => ({ ...f, sort: val }))}
+            >
+              <SelectTrigger className="w-[170px]">
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="deadlineAsc">Deadline (Soonest)</SelectItem>
+                <SelectItem value="deadlineDesc">Deadline (Latest)</SelectItem>
+                <SelectItem value="createdDesc">Newest Created</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant={filters.layout === 'grid' ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => setFilters((f) => ({ ...f, layout: 'grid' }))}
+              aria-label="Grid view"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={filters.layout === 'list' ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => setFilters((f) => ({ ...f, layout: 'list' }))}
+              aria-label="List view"
+            >
+              <List className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setFilters((f) => ({ ...f, search: '', status: 'active', sort: 'deadlineAsc' }))}
+            >
+              Clear
+            </Button>
+          </div>
+        </div>
+
         {/* TABS */}
         <Tabs defaultValue="available">
           <TabsList className="grid w-[400px] grid-cols-2 mb-6">
@@ -490,11 +586,68 @@ export const StudentDashboard = () => {
 
           {/* AVAILABLE */}
           <TabsContent value="available">
-            {availableLinks.length === 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center min-h-[260px]">
+                <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+              </div>
+            ) : availableLinks.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Link2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No active links available</p>
+                  <p className="text-gray-600">No links match the current filters</p>
+                  <p className="text-sm text-gray-400 mt-1">Try clearing filters or check back later</p>
+                </CardContent>
+              </Card>
+            ) : filters.layout === 'list' ? (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Available Links</CardTitle>
+                    <CardDescription>Click a row to view or register</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <CalendarClock className="w-4 h-4" />
+                    Sorted by
+                    {filters.sort === 'deadlineAsc' && ' earliest deadline'}
+                    {filters.sort === 'deadlineDesc' && ' latest deadline'}
+                    {filters.sort === 'createdDesc' && ' newest created'}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Deadline</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {availableLinks.map((link) => (
+                        <TableRow
+                          key={getId(link)!}
+                          className="cursor-pointer"
+                          onClick={() => handleRegister(link)}
+                        >
+                          <TableCell className="font-medium">{link.title}</TableCell>
+                          <TableCell>
+                            {link.deadline
+                              ? new Date(link.deadline).toLocaleDateString()
+                              : '—'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{link.active === false ? 'Inactive' : 'Open'}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleRegister(link); }}>
+                              Register
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </CardContent>
               </Card>
             ) : (
